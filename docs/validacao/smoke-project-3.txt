@@ -1,0 +1,55 @@
+[pre] python seed.py
+Seed concluído com sucesso!
+  3 usuários
+  4 categorias
+  10 tasks
+  exit=0
+
+=== task-manager-api boot=OK (['C:\\Users\\lucas\\AppData\\Local\\Programs\\Python\\Python313\\python.exe', 'app.py']) ===
+OK  GET    /health                                  -> 200 (exp [200]) keys=['status', 'timestamp']
+OK  GET    /                                        -> 200 (exp [200]) keys=['message', 'version']
+OK  GET    /tasks                                   -> 200 (exp [200]) keys=list[10] item:['category_id', 'category_name', 'created_at', 'description', 'due_date', 'id', 'overdue', 'priority', 'status', 'tags', 'title', 'updated_at', 'user_id', 'user_name']
+OK  GET    /tasks/1                                 -> 200 (exp [200]) keys=['category_id', 'created_at', 'description', 'due_date', 'id', 'overdue', 'priority', 'status', 'tags', 'title', 'updated_at', 'user_id']
+OK  GET    /tasks/9999                              -> 404 (exp [404]) keys=['error']
+OK  POST   /tasks                                   -> 201 (exp [201]) keys=['category_id', 'created_at', 'description', 'due_date', 'id', 'priority', 'status', 'tags', 'title', 'updated_at', 'user_id']
+OK  POST   /tasks                                   -> 400 (exp [400]) keys=['error']
+OK  POST   /tasks                                   -> 400 (exp [400]) keys=['error']
+OK  PUT    /tasks/11                                -> 200 (exp [200]) keys=['category_id', 'created_at', 'description', 'due_date', 'id', 'priority', 'status', 'tags', 'title', 'updated_at', 'user_id']
+OK  GET    /tasks/search?q=task                     -> 200 (exp [200]) keys=list[1] item:['category_id', 'created_at', 'description', 'due_date', 'id', 'priority', 'status', 'tags', 'title', 'updated_at', 'user_id']
+OK  GET    /tasks/search?priority=abc               -> 400 (exp [400]) keys=['error']
+OK  GET    /tasks/stats                             -> 200 (exp [200]) keys=['cancelled', 'completion_rate', 'done', 'in_progress', 'overdue', 'pending', 'total']
+OK  DELETE /tasks/11                                -> 200 (exp [200]) keys=['message']
+OK  GET    /users                                   -> 200 (exp [200]) keys=list[3] item:['active', 'created_at', 'email', 'id', 'name', 'role', 'task_count']
+OK  GET    /users/1                                 -> 200 (exp [200]) keys=['active', 'created_at', 'email', 'id', 'name', 'role', 'tasks']
+OK  POST   /users                                   -> 201 (exp [201]) keys=['active', 'created_at', 'email', 'id', 'name', 'role']
+OK  POST   /users                                   -> 409 (exp [409]) keys=['error']
+OK  PUT    /users/4                                 -> 200 (exp [200]) keys=['active', 'created_at', 'email', 'id', 'name', 'role']
+OK  GET    /users/1/tasks                           -> 200 (exp [200]) keys=list[4] item:['created_at', 'description', 'due_date', 'id', 'overdue', 'priority', 'status', 'title']
+OK  POST   /login                                   -> 200 (exp [200]) keys=['message', 'token', 'user']
+OK  POST   /login                                   -> 401 (exp [401]) keys=['error']
+OK  DELETE /users/4                                 -> 200 (exp [200]) keys=['message']
+OK  GET    /reports/summary                         -> 200 (exp [200]) keys=['generated_at', 'overdue', 'overview', 'recent_activity', 'tasks_by_priority', 'tasks_by_status', 'user_productivity']
+OK  GET    /reports/user/1                          -> 200 (exp [200]) keys=['statistics', 'user']
+OK  GET    /categories                              -> 200 (exp [200]) keys=list[4] item:['color', 'created_at', 'description', 'id', 'name', 'task_count']
+OK  POST   /categories                              -> 201 (exp [201]) keys=['color', 'created_at', 'description', 'id', 'name']
+OK  POST   /categories                              -> 400 (exp [400]) keys=['error']
+OK  PUT    /categories/5                            -> 200 (exp [200]) keys=['color', 'created_at', 'description', 'id', 'name']
+OK  PUT    /categories/5                            -> 400 (exp [400]) keys=['error']
+OK  DELETE /categories/5                            -> 200 (exp [200]) keys=['message']
+OK  GET    /nao-existe                              -> 404 (exp [404]) keys=['error']
+--- server log (tail) ---
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /reports/summary HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /reports/user/1 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /categories HTTP/1.1" 200 -
+INFO:services.category_service:Categoria criada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[35m[1mPOST /categories HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[31m[1mPOST /categories HTTP/1.1[0m" 400 -
+INFO:services.category_service:Categoria atualizada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "PUT /categories/5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[31m[1mPUT /categories/5 HTTP/1.1[0m" 400 -
+INFO:services.category_service:Categoria deletada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "DELETE /categories/5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[33mGET /nao-existe HTTP/1.1[0m" 404 -
+port 5000 free
+=== task-manager-api: 31/31 OK ===
+

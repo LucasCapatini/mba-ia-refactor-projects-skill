@@ -1,0 +1,46 @@
+
+=== code-smells-project boot=OK (['C:\\Users\\lucas\\AppData\\Local\\Programs\\Python\\Python313\\python.exe', 'app.py']) ===
+OK  GET    /                                        -> 200 (exp [200]) keys=['endpoints', 'mensagem', 'versao']
+OK  GET    /health                                  -> 200 (exp [200]) keys=['ambiente', 'counts', 'database', 'status', 'versao']
+OK  GET    /produtos                                -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  GET    /produtos/busca?q=mouse                  -> 200 (exp [200]) keys=['dados', 'sucesso', 'total']
+OK  GET    /produtos/busca?q=x&preco_min=abc        -> 400 (exp [400]) keys=['erro', 'sucesso']
+OK  GET    /produtos/1                              -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  GET    /produtos/9999                           -> 404 (exp [404]) keys=['erro', 'sucesso']
+OK  POST   /produtos                                -> 201 (exp [201]) keys=['dados', 'mensagem', 'sucesso']
+OK  POST   /produtos                                -> 400 (exp [400]) keys=['erro', 'sucesso']
+OK  PUT    /produtos/20                             -> 200 (exp [200]) keys=['mensagem', 'sucesso']
+OK  DELETE /produtos/20                             -> 200 (exp [200]) keys=['mensagem', 'sucesso']
+OK  GET    /usuarios                                -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  GET    /usuarios/1                              -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  POST   /usuarios                                -> 201 (exp [201]) keys=['dados', 'sucesso']
+OK  POST   /login                                   -> 200 (exp [200]) keys=['dados', 'mensagem', 'sucesso']
+OK  POST   /login                                   -> 401 (exp [401]) keys=['erro', 'sucesso']
+OK  POST   /login                                   -> 401 (exp [401, 400]) keys=['erro', 'sucesso']
+OK  POST   /login                                   -> 400 (exp [400]) keys=['erro', 'sucesso']
+OK  POST   /pedidos                                 -> 201 (exp [201]) keys=['dados', 'mensagem', 'sucesso']
+OK  POST   /pedidos                                 -> 400 (exp [400]) keys=['erro', 'sucesso']
+OK  GET    /pedidos                                 -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  GET    /pedidos/usuario/2                       -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  PUT    /pedidos/10/status                       -> 200 (exp [200]) keys=['mensagem', 'sucesso']
+OK  PUT    /pedidos/10/status                       -> 400 (exp [400]) keys=['erro', 'sucesso']
+OK  GET    /relatorios/vendas                       -> 200 (exp [200]) keys=['dados', 'sucesso']
+OK  POST   /admin/reset-db                          -> 403 (exp [403]) keys=['erro', 'sucesso']
+OK  POST   /admin/query                             -> 403 (exp [403]) keys=['erro', 'sucesso']
+OK  GET    /rota-inexistente                        -> 404 (exp [404]) keys=['erro', 'sucesso']
+--- server log (tail) ---
+2026-10-17 03:59:18,076 INFO src.services.notificacao_service: PUSH: novo pedido 10 recebido pelo sistema
+2026-10-17 03:59:18,077 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[35m[1mPOST /pedidos HTTP/1.1[0m" 201 -
+2026-10-17 03:59:18,103 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /pedidos HTTP/1.1[0m" 400 -
+2026-10-17 03:59:18,107 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /pedidos HTTP/1.1" 200 -
+2026-10-17 03:59:18,133 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /pedidos/usuario/2 HTTP/1.1" 200 -
+2026-10-17 03:59:18,198 INFO src.services.notificacao_service: NOTIFICAÇÃO: pedido 10 aprovado, preparar envio
+2026-10-17 03:59:18,198 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "PUT /pedidos/10/status HTTP/1.1" 200 -
+2026-10-17 03:59:18,210 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPUT /pedidos/10/status HTTP/1.1[0m" 400 -
+2026-10-17 03:59:18,226 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /relatorios/vendas HTTP/1.1" 200 -
+2026-10-17 03:59:18,241 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /admin/reset-db HTTP/1.1[0m" 403 -
+2026-10-17 03:59:18,257 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /admin/query HTTP/1.1[0m" 403 -
+2026-10-17 03:59:18,273 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[33mGET /rota-inexistente HTTP/1.1[0m" 404 -
+port 5000 free
+=== code-smells-project: 28/28 OK ===
+

@@ -1,0 +1,47 @@
+2026-10-17 03:59:17,083 INFO src.database: Schema verificado em loja.db
+2026-10-17 03:59:17,083 INFO __main__: Servidor iniciado em http://127.0.0.1:5000
+ * Serving Flask app 'src.app'
+ * Debug mode: off
+2026-10-17 03:59:17,097 INFO werkzeug: [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2026-10-17 03:59:17,098 INFO werkzeug: [33mPress CTRL+C to quit[0m
+2026-10-17 03:59:17,421 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /health HTTP/1.1" 200 -
+2026-10-17 03:59:17,436 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET / HTTP/1.1" 200 -
+2026-10-17 03:59:17,452 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /health HTTP/1.1" 200 -
+2026-10-17 03:59:17,467 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /produtos HTTP/1.1" 200 -
+2026-10-17 03:59:17,471 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /produtos/busca?q=mouse HTTP/1.1" 200 -
+2026-10-17 03:59:17,498 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "[31m[1mGET /produtos/busca?q=x&preco_min=abc HTTP/1.1[0m" 400 -
+2026-10-17 03:59:17,514 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /produtos/1 HTTP/1.1" 200 -
+2026-10-17 03:59:17,529 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "[33mGET /produtos/9999 HTTP/1.1[0m" 404 -
+2026-10-17 03:59:17,564 INFO src.services.produto_service: Produto criado com id 20
+2026-10-17 03:59:17,565 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "[35m[1mPOST /produtos HTTP/1.1[0m" 201 -
+2026-10-17 03:59:17,590 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "[31m[1mPOST /produtos HTTP/1.1[0m" 400 -
+2026-10-17 03:59:17,606 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "PUT /produtos/20 HTTP/1.1" 200 -
+2026-10-17 03:59:17,630 INFO src.services.produto_service: Produto 20 deletado
+2026-10-17 03:59:17,631 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "DELETE /produtos/20 HTTP/1.1" 200 -
+2026-10-17 03:59:17,652 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /usuarios HTTP/1.1" 200 -
+2026-10-17 03:59:17,667 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "GET /usuarios/1 HTTP/1.1" 200 -
+2026-10-17 03:59:17,787 INFO src.services.usuario_service: Usuário criado com id 13
+2026-10-17 03:59:17,788 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "[35m[1mPOST /usuarios HTTP/1.1[0m" 201 -
+2026-10-17 03:59:17,896 INFO src.services.usuario_service: Login bem-sucedido para usuário id 1
+2026-10-17 03:59:17,897 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:17] "POST /login HTTP/1.1" 200 -
+2026-10-17 03:59:18,000 INFO src.services.usuario_service: Login falhou
+2026-10-17 03:59:18,000 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
+2026-10-17 03:59:18,025 INFO src.services.usuario_service: Login falhou
+2026-10-17 03:59:18,025 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
+2026-10-17 03:59:18,040 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /login HTTP/1.1[0m" 400 -
+2026-10-17 03:59:18,076 INFO src.services.pedido_service: Pedido 10 criado para usuário 2
+2026-10-17 03:59:18,076 INFO src.services.notificacao_service: EMAIL: pedido 10 criado para usuário 2
+2026-10-17 03:59:18,076 INFO src.services.notificacao_service: SMS: pedido 10 recebido
+2026-10-17 03:59:18,076 INFO src.services.notificacao_service: PUSH: novo pedido 10 recebido pelo sistema
+2026-10-17 03:59:18,077 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[35m[1mPOST /pedidos HTTP/1.1[0m" 201 -
+2026-10-17 03:59:18,103 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /pedidos HTTP/1.1[0m" 400 -
+2026-10-17 03:59:18,107 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /pedidos HTTP/1.1" 200 -
+2026-10-17 03:59:18,133 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /pedidos/usuario/2 HTTP/1.1" 200 -
+2026-10-17 03:59:18,198 INFO src.services.notificacao_service: NOTIFICAÇÃO: pedido 10 aprovado, preparar envio
+2026-10-17 03:59:18,198 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "PUT /pedidos/10/status HTTP/1.1" 200 -
+2026-10-17 03:59:18,210 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPUT /pedidos/10/status HTTP/1.1[0m" 400 -
+2026-10-17 03:59:18,226 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "GET /relatorios/vendas HTTP/1.1" 200 -
+2026-10-17 03:59:18,241 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /admin/reset-db HTTP/1.1[0m" 403 -
+2026-10-17 03:59:18,257 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[31m[1mPOST /admin/query HTTP/1.1[0m" 403 -
+2026-10-17 03:59:18,273 INFO werkzeug: 127.0.0.1 - - [17/Oct/2026 03:59:18] "[33mGET /rota-inexistente HTTP/1.1[0m" 404 -

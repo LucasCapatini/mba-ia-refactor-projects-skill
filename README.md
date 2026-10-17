@@ -142,31 +142,152 @@ Todos têm código antes/depois em Python **e** em JavaScript e um checklist de 
 
 ## C) Resultados
 
-> Esta seção é preenchida após a execução da skill nos três projetos (Etapa 3 do plano). Os relatórios ficam em `reports/audit-project-{1,2,3}.md`.
+A skill foi executada nos três projetos. Os relatórios da Fase 2 estão em `reports/audit-project-{1,2,3}.md` e as evidências de validação em `docs/validacao/`.
 
 ### Resumo dos relatórios de auditoria
 
-| Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
-|---|---|---|---|---|---|
-| 1 — code-smells-project | _pendente_ | | | | |
-| 2 — ecommerce-api-legacy | _pendente_ | | | | |
-| 3 — task-manager-api | _pendente_ | | | | |
+| Projeto | Stack detectada | Arquitetura | CRITICAL | HIGH | MEDIUM | LOW | Total | Deprecated detectado |
+|---|---|---|---|---|---|---|---|---|
+| 1 — code-smells-project | Python 3.13 + Flask 3.1.1 + sqlite3 | Monolito plano → Estratégia A | 4 | 4 | 5 | 4 | 17 | só `app.run(debug=True)` (nenhuma API removida; verificado e declarado) |
+| 2 — ecommerce-api-legacy | Node 22 + Express 4.22.1 + sqlite3 | Monolito plano → Estratégia A | 3 | 4 | 5 | 5 | 17 | API de callbacks do `sqlite3`, `const self = this`, `function(err){this.lastID}` |
+| 3 — task-manager-api | Python 3.13 + Flask 3.0.0 + Flask-SQLAlchemy 3.1.1 | Parcialmente em camadas → Estratégia B | 3 | 4 | 6 | 4 | 17 | `datetime.utcnow` (40×), `Model.query.get` (14×), `app.run(debug=True)`, Flask-CORS 4.0.0 (CVE-2024-1681) |
+
+Todos os 17 findings de cada projeto citam arquivo e linhas exatos, estão ordenados de CRITICAL para LOW e apontam o `AP-xx` do catálogo e o `PB-xx` do playbook. Uma amostra de 29 referências arquivo:linha foi conferida manualmente contra o código original: todas corretas.
+
+Os 10 problemas da Análise Manual de cada projeto aparecem nos relatórios. A skill também descartou corretamente dois falsos positivos: no projeto 2 rodou o sinal de SQL injection e concluiu que todas as queries usavam placeholders; no projeto 3 identificou que `like(f'%{query}%')` monta apenas o valor do bind parameter.
+
+**Correção pós-execução.** O finding #13 do projeto 3 afirmava que apagar uma categoria deixava tasks órfãs. Na Fase 3 a própria skill verificou que o SQLAlchemy já anulava a FK implicitamente via `backref`, e apontou a imprecisão. O texto do finding foi corrigido no relatório salvo, com nota explicando a correção; o problema real, ausência de política explícita de integridade, permanece válido.
 
 ### Estrutura antes/depois
 
-_pendente por projeto._
+**Projeto 1 — code-smells-project** (4 arquivos / 780 LOC → 33 módulos / 1070 LOC)
+
+```
+ANTES                         DEPOIS
+app.py                        app.py                    # entry point fino: create_app() + init_db() + seed_db()
+controllers.py                .env.example
+models.py                     src/
+database.py                   ├── app.py                # create_app(): config, CORS, teardown, blueprints, error handlers
+                              ├── config/settings.py    # os.environ com defaults seguros
+                              ├── database.py           # conexão via flask.g, transaction(), init_db(), seed_db()
+                              ├── domain/               # constants.py, exceptions.py
+                              ├── models/               # produto, usuario, pedido, relatorio, sistema (SQL parametrizado)
+                              ├── services/             # produto, usuario, pedido (transação), relatorio, notificacao, admin
+                              ├── validators/           # produto, usuario, pedido
+                              ├── controllers/          # produto, usuario, pedido, relatorio, sistema, admin
+                              ├── views/routes.py       # 6 Blueprints, mesmos paths
+                              └── middlewares/error_handler.py
+```
+
+**Projeto 2 — ecommerce-api-legacy** (3 arquivos / 180 LOC → 30 módulos / 698 LOC)
+
+```
+ANTES                         DEPOIS
+src/app.js                    src/app.js                # createApp({ db }) + start(); guard require.main
+src/AppManager.js             .env.example
+src/utils.js                  src/
+                              ├── config/index.js       # process.env com defaults
+                              ├── database/             # connection.js (Promises + transação), schema.js (FKs), seed.js
+                              ├── domain/               # constants.js, errors.js
+                              ├── models/               # user, course, enrollment, payment, auditLog, report (JOIN)
+                              ├── services/             # checkout (transacional), payment, report, user
+                              ├── validators/           # checkout, user
+                              ├── controllers/          # checkout, report, user
+                              ├── routes/               # index.js (/api) + um por entidade
+                              ├── middlewares/          # asyncHandler.js, errorHandler.js
+                              └── utils/                # logger.js, password.js (scrypt)
+```
+
+`package.json` e `api.http` não foram alterados.
+
+**Projeto 3 — task-manager-api** (15 arquivos / 1158 LOC → 46 módulos / 1306 LOC, pastas originais mantidas)
+
+```
+ANTES                         DEPOIS
+app.py                        app.py                    # create_app() + init_db(); `from app import app, db` continua válido
+database.py                   seed.py                   # init_db(reset=True) + seed com o mesmo hash da aplicação
+seed.py                       .env.example
+models/  (3)                  config/settings.py        # novo
+routes/  (3, com lógica)      domain/                   # novo: constants.py, exceptions.py, clock.py (utc_now)
+services/ (1, sem uso)        models/  (3)              # to_dict sem senha; is_overdue() como fonte única
+utils/   (1, quase sem uso)   validators/ (3)           # novo
+                              services/ (6)             # task, user, auth, category, report, notification
+                              controllers/ (6)          # novo
+                              routes/   (6, só mapeiam) # categorias e login separados, mesmos paths
+                              middlewares/error_handler.py  # novo
+                              utils/helpers.py          # só o que é usado
+```
+
+`requirements.txt` perdeu `marshmallow` e `requests` (nunca importados); `python-dotenv`, que já estava pinado, passou a ser usado.
 
 ### Checklist de validação
 
-_pendente por projeto (modelo em `docs/DESAFIO.md`)._
+| Item | P1 | P2 | P3 |
+|---|---|---|---|
+| **Fase 1** | | | |
+| Linguagem detectada corretamente | ✓ Python 3.13 | ✓ JavaScript/Node 22 | ✓ Python 3.13 |
+| Framework detectado corretamente | ✓ Flask 3.1.1 | ✓ Express 4.22.1 | ✓ Flask 3.0.0 + SQLAlchemy |
+| Domínio descrito corretamente | ✓ E-commerce | ✓ LMS com checkout | ✓ Task Manager |
+| Nº de arquivos condiz com a realidade | ✓ 4 | ✓ 3 (+ api.http) | ✓ 15 |
+| **Fase 2** | | | |
+| Relatório segue o template | ✓ | ✓ | ✓ |
+| Cada finding tem arquivo e linhas exatos | ✓ | ✓ | ✓ |
+| Findings ordenados CRITICAL → LOW | ✓ | ✓ | ✓ |
+| Mínimo de 5 findings | ✓ 17 | ✓ 17 | ✓ 17 |
+| Detecção de APIs deprecated incluída | ✓ | ✓ | ✓ |
+| Skill pausa e pede confirmação antes da Fase 3 | ✓ | ✓ | ✓ |
+| **Fase 3** | | | |
+| Estrutura de diretórios segue MVC | ✓ | ✓ | ✓ |
+| Configuração extraída para módulo de config | ✓ `src/config/settings.py` | ✓ `src/config/index.js` | ✓ `config/settings.py` |
+| Models criados para abstrair dados | ✓ 5 | ✓ 6 | ✓ 3 (mantidos e corrigidos) |
+| Views/Routes separadas | ✓ `src/views/routes.py` | ✓ `src/routes/` | ✓ `routes/` só mapeiam |
+| Controllers concentram o fluxo | ✓ 6 | ✓ 3 | ✓ 6 |
+| Error handling centralizado | ✓ | ✓ | ✓ |
+| Entry point claro | ✓ `app.py` | ✓ `src/app.js` com guard | ✓ `app.py` |
+| Aplicação inicia sem erros | ✓ | ✓ | ✓ |
+| Endpoints originais respondem corretamente | ✓ 19/19 rotas, 28/28 chamadas | ✓ 3/3 rotas, 9/9 chamadas | ✓ 22/22 rotas, 31/31 chamadas |
 
 ### Logs das aplicações após refatoração
 
-_pendente._
+Além da validação feita pela própria skill, cada aplicação foi validada de forma independente, em sequência e na porta padrão, por um smoke test externo (`docs/validacao/smoke.py`) que sobe o servidor, bate em todos os endpoints do contrato com payloads válidos e inválidos, confere status e chaves de topo do JSON, verifica a ausência de campos sensíveis e derruba o processo. Saída completa em `docs/validacao/smoke-project-{1,2,3}.txt` e logs dos servidores em `docs/validacao/server-project-{1,2,3}.log`. Trechos:
+
+```
+=== code-smells-project boot=OK (python app.py) ===
+OK  GET    /health            -> 200 keys=['ambiente', 'counts', 'database', 'status', 'versao']   # sem secret_key/db_path
+OK  GET    /usuarios          -> 200 keys=['dados', 'sucesso']                                      # sem campo senha
+OK  POST   /login             -> 401 (payload: ' OR '1'='1' --)                                     # injection bloqueada
+OK  POST   /pedidos           -> 400 (estoque insuficiente; rollback, nada gravado)
+OK  POST   /admin/query       -> 403                                                                # desligado por flag
+=== code-smells-project: 28/28 OK ===
+
+=== ecommerce-api-legacy boot=OK (npm start) ===
+OK  POST   /api/checkout      -> 200 keys=['enrollment_id', 'msg']       # cartão 4111... (api.http)
+OK  POST   /api/checkout      -> 400 "Pagamento recusado"                # cartão 5111... (api.http)
+OK  DELETE /api/users/1       -> 200 "Usuário deletado"
+OK  GET    /api/admin/financial-report -> 200 list[2] item:['course', 'revenue', 'students']   # sem 'Unknown'
+=== ecommerce-api-legacy: 9/9 OK ===
+
+=== task-manager-api boot=OK (python seed.py && python app.py) ===
+OK  GET    /tasks             -> 200 list[10] item:[..., 'overdue', 'user_name', 'category_name']
+OK  GET    /users/1           -> 200 keys=['active', 'created_at', 'email', 'id', 'name', 'role', 'tasks']   # sem password
+OK  POST   /login             -> 200 keys=['message', 'token', 'user']    # token aleatório, sem 'fake-jwt'
+OK  GET    /reports/summary   -> 200 keys=['generated_at', 'overdue', 'overview', ...]
+=== task-manager-api: 31/31 OK ===
+```
+
+### Mudanças de comportamento intencionais (documentadas pela skill)
+
+Comuns aos três: campos de senha ou hash removidos das respostas; segredos saem do código para variáveis de ambiente com defaults seguros (`DEBUG=false`, host local); entradas malformadas que geravam 500 passam a responder 400; bancos locais recriados por causa da troca do esquema de senha. Específicas: no projeto 1, `/admin/query` e `/admin/reset-db` continuam registradas mas respondem 403 salvo flag de ambiente; no projeto 2, o `DELETE /api/users/:id` cascateia matrículas e pagamentos e a mensagem deixa de admitir "ficaram sujos no banco"; no projeto 3, o token de login passa a ser aleatório em vez de `fake-jwt-token-<id>`. Nomes de campos de entrada, paths, métodos e status codes de sucesso foram preservados em todos os endpoints, inclusive os campos `usr`, `eml`, `c_id` e `card` do checkout.
 
 ### Observações sobre o comportamento em stacks diferentes
 
-_pendente._
+- **Agnosticismo confirmado.** A mesma skill, sem nenhuma alteração entre projetos, detectou Python e JavaScript, SQL cru e ORM, callbacks e Blueprints. Os sinais por linguagem do catálogo foram suficientes; nenhum finding dependeu de nome de arquivo.
+- **Estratégia B funcionou como projetado.** No projeto 3 a skill manteve `models/`, `routes/` e `services/` no lugar, criou só o que faltava, reaproveitou `Task.is_overdue()` e as constantes órfãs de `utils/helpers.py` em vez de criar novas, e manteve `python seed.py` funcionando.
+- **Falsos positivos tratados.** Nos dois projetos sem SQL injection a skill rodou o sinal, leu o trecho e descartou com justificativa escrita, em vez de inflar o relatório.
+- **Honestidade na validação.** Em nenhum projeto a skill escreveu "zero anti-patterns"; cada uma listou resíduos justificados (ex.: `this.lastID` dentro do wrapper de Promises, f-string que interpola apenas placeholders `?`).
+- **Adaptação a ambiente hostil.** As Fases 3 dos três projetos foram executadas em paralelo por engano. A skill do projeto 1 encontrou a porta 5000 ocupada pelo projeto 3, não matou o processo alheio (regra da referência de validação) e validou em portas alternativas, mantendo 5000 como default do contrato. A validação independente posterior confirmou os resultados na porta padrão.
+- **Diferença entre Flask puro e SQLAlchemy.** No projeto 1 a camada de dados virou funções com SQL parametrizado e um `to_dict` por entidade; no projeto 3 os `db.Model` existentes foram mantidos e a correção foi em `to_dict`, cascatas e substituição de `Model.query.get` por `db.session.get`. O playbook cobre os dois casos.
+- **Iterações.** Nenhuma iteração da skill foi necessária: os três projetos passaram na primeira execução completa. O enunciado previa de 2 a 4.
 
 ---
 
@@ -224,6 +345,16 @@ curl http://localhost:5000/tasks
 ```
 
 Os dois projetos Flask usam a porta 5000: não os rode ao mesmo tempo. No PowerShell use `curl.exe` (ou `Invoke-RestMethod`), pois `curl` é alias de `Invoke-WebRequest`.
+
+Para repetir a validação completa de um projeto (sobe o servidor, bate em todos os endpoints com payloads válidos e inválidos, confere status, chaves e ausência de campos sensíveis, e derruba o processo), use o smoke test externo a partir da raiz do repositório:
+
+```bash
+python docs/validacao/smoke.py 1   # code-smells-project
+python docs/validacao/smoke.py 2   # ecommerce-api-legacy
+python docs/validacao/smoke.py 3   # task-manager-api (roda o seed antes)
+```
+
+Cada execução termina com uma linha `=== <projeto>: N/N OK ===` e confirma que a porta ficou livre.
 
 ### Reutilizar a skill em outro projeto
 

@@ -1,0 +1,47 @@
+ * Serving Flask app 'app'
+ * Debug mode: off
+INFO:werkzeug:[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+INFO:werkzeug:[33mPress CTRL+C to quit[0m
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /health HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET / HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /tasks HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /tasks/1 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[33mGET /tasks/9999 HTTP/1.1[0m" 404 -
+INFO:services.task_service:Task criada: id=11
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[35m[1mPOST /tasks HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[31m[1mPOST /tasks HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[31m[1mPOST /tasks HTTP/1.1[0m" 400 -
+INFO:services.task_service:Task atualizada: id=11
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "PUT /tasks/11 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /tasks/search?q=task HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[31m[1mGET /tasks/search?priority=abc HTTP/1.1[0m" 400 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /tasks/stats HTTP/1.1" 200 -
+INFO:services.task_service:Task deletada: id=11
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "DELETE /tasks/11 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /users HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /users/1 HTTP/1.1" 200 -
+INFO:services.user_service:Usuário criado: id=4
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[35m[1mPOST /users HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[31m[1mPOST /users HTTP/1.1[0m" 409 -
+INFO:services.user_service:Usuário atualizado: id=4
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "PUT /users/4 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /users/1/tasks HTTP/1.1" 200 -
+INFO:services.auth_service:Login realizado: user_id=1
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "POST /login HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[31m[1mPOST /login HTTP/1.1[0m" 401 -
+INFO:services.user_service:Usuário deletado: id=4
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "DELETE /users/4 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /reports/summary HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /reports/user/1 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "GET /categories HTTP/1.1" 200 -
+INFO:services.category_service:Categoria criada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:28] "[35m[1mPOST /categories HTTP/1.1[0m" 201 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[31m[1mPOST /categories HTTP/1.1[0m" 400 -
+INFO:services.category_service:Categoria atualizada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "PUT /categories/5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[31m[1mPUT /categories/5 HTTP/1.1[0m" 400 -
+INFO:services.category_service:Categoria deletada: id=5
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "DELETE /categories/5 HTTP/1.1" 200 -
+INFO:werkzeug:127.0.0.1 - - [17/Oct/2026 03:59:29] "[33mGET /nao-existe HTTP/1.1[0m" 404 -
