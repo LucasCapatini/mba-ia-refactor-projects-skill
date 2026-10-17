@@ -1,34 +1,33 @@
+"""Composition root e entry point (PB-07). Importar este módulo não toca o banco nem abre porta."""
+import logging
+
 from flask import Flask
 from flask_cors import CORS
-from database import db
-from routes.task_routes import task_bp
-from routes.user_routes import user_bp
-from routes.report_routes import report_bp
-import os, sys, json, datetime
 
-app = Flask(__name__)
+from config.settings import Config
+from database import db, init_db
+from middlewares.error_handler import register_error_handlers
+from routes import register_blueprints
+from services.notification_service import NotificationService
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tasks.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'super-secret-key-123'
 
-CORS(app)
-db.init_app(app)
+def create_app(config_object=Config):
+    app = Flask(__name__)
+    app.config.from_object(config_object)
+    logging.basicConfig(level=app.config['LOG_LEVEL'])
 
-app.register_blueprint(task_bp)
-app.register_blueprint(user_bp)
-app.register_blueprint(report_bp)
+    CORS(app)
+    db.init_app(app)
+    app.extensions['notifications'] = NotificationService.from_config(app.config)
 
-@app.route('/health')
-def health():
-    return {'status': 'ok', 'timestamp': str(datetime.datetime.now())}
+    register_blueprints(app)
+    register_error_handlers(app)
+    return app
 
-@app.route('/')
-def index():
-    return {'message': 'Task Manager API', 'version': '1.0'}
 
-with app.app_context():
-    db.create_all()
+# Instância em nível de módulo mantida por compatibilidade com scripts que fazem `from app import app, db`.
+app = create_app()
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    init_db(app)
+    app.run(host=Config.HOST, port=Config.PORT, debug=Config.DEBUG)
