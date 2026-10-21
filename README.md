@@ -104,6 +104,8 @@ A skill vive em `.claude/skills/refactor-arch/` dentro de cada um dos três proj
 
 **Identificadores cruzados.** Cada anti-pattern tem um ID (`AP-xx`) e aponta para o(s) padrão(ões) de transformação que o resolve (`PB-xx`). O relatório cita ambos, e a saída da Fase 3 lista `finding → PB aplicado → arquivos`. Isso torna rastreável por que cada mudança foi feita.
 
+**Resolvido = Impact conferido.** Aplicar o PB não basta para dar um finding como resolvido. Na Fase 3, o plano diz como cada item do `Impact` vai deixar de acontecer, e a validação confere cada item com uma evidência observada no código novo ou na execução (tabela `Impact Verification`). Um item `✗` mantém o finding em `Findings Remaining`. A regra entrou depois da avaliação: o finding de senha do projeto 2 tinha sido dado como resolvido com hash correto aplicado sobre uma senha padrão fixa.
+
 ### Catálogo de anti-patterns (18) e por quê
 
 | Severidade | Anti-patterns | Motivação |
@@ -117,7 +119,7 @@ Cada entrada traz sinais de detecção em regex para Python e para JavaScript, l
 
 ### Playbook (16 transformações)
 
-PB-01 config por ambiente · PB-02 SQL parametrizado e rota de SQL arbitrário atrás de flag · PB-03 dividir God Class por domínio · PB-04 hash seguro e remoção de campos sensíveis · PB-05 Thin Routes → Controllers → Services · PB-06 conexão por contexto/injetada · PB-07 application factory e entry point com guard · PB-08 error handling centralizado · PB-09 eliminar N+1 · PB-10 callback hell → async/await com transação · PB-11 validadores centralizados · PB-12 substituir APIs deprecated · PB-13 constantes e enums · PB-14 serialização única por entidade · PB-15 transações e integridade · PB-16 nomenclatura, logging e limpeza.
+PB-01 config por ambiente · PB-02 SQL parametrizado e rota de SQL arbitrário atrás de flag · PB-03 dividir God Class por domínio · PB-04 hash seguro, senha ausente aleatória e inutilizável e remoção de campos sensíveis · PB-05 Thin Routes → Controllers → Services · PB-06 conexão por contexto/injetada · PB-07 application factory e entry point com guard · PB-08 error handling centralizado · PB-09 eliminar N+1 · PB-10 callback hell → async/await com transação · PB-11 validadores centralizados · PB-12 substituir APIs deprecated · PB-13 constantes e enums · PB-14 serialização única por entidade · PB-15 transações e integridade · PB-16 nomenclatura, logging e limpeza.
 
 Todos têm código antes/depois em Python **e** em JavaScript e um checklist de contrato. As soluções usam só biblioteca padrão ou o que já está no manifesto (`werkzeug.security` para hash em Flask, `node:crypto` com scrypt em Node, wrapper de Promises sobre `sqlite3` em vez de trocar o driver), porque a regra de escopo proíbe dependências novas sem confirmação.
 
@@ -149,14 +151,23 @@ A skill foi executada nos três projetos. Os relatórios da Fase 2 estão em `re
 | Projeto | Stack detectada | Arquitetura | CRITICAL | HIGH | MEDIUM | LOW | Total | Deprecated detectado |
 |---|---|---|---|---|---|---|---|---|
 | 1 — code-smells-project | Python 3.13 + Flask 3.1.1 + sqlite3 | Monolito plano → Estratégia A | 4 | 4 | 5 | 4 | 17 | só `app.run(debug=True)` (nenhuma API removida; verificado e declarado) |
-| 2 — ecommerce-api-legacy | Node 22 + Express 4.22.1 + sqlite3 | Monolito plano → Estratégia A | 3 | 4 | 5 | 5 | 17 | API de callbacks do `sqlite3`, `const self = this`, `function(err){this.lastID}` |
+| 2 — ecommerce-api-legacy | Node 22 + Express 4.22.1 + sqlite3 | Monolito plano → Estratégia A | 3 | 4 | 4 | 5 | 16 | API de callbacks do `sqlite3`, `const self = this`, `function(err){this.lastID}` |
 | 3 — task-manager-api | Python 3.13 + Flask 3.0.0 + Flask-SQLAlchemy 3.1.1 | Parcialmente em camadas → Estratégia B | 3 | 4 | 6 | 4 | 17 | `datetime.utcnow` (40×), `Model.query.get` (14×), `app.run(debug=True)`, Flask-CORS 4.0.0 (CVE-2024-1681) |
 
-Todos os 17 findings de cada projeto citam arquivo e linhas exatos, estão ordenados de CRITICAL para LOW e apontam o `AP-xx` do catálogo e o `PB-xx` do playbook. Uma amostra de 29 referências arquivo:linha foi conferida manualmente contra o código original: todas corretas.
+Todos os findings (17, 16 e 17) citam arquivo e linhas exatos, estão ordenados de CRITICAL para LOW e apontam o `AP-xx` do catálogo e o `PB-xx` do playbook. Uma amostra de 29 referências arquivo:linha da primeira execução e de mais 10 do relatório refeito do projeto 2 foi conferida manualmente contra o código original: todas corretas.
 
 Os 10 problemas da Análise Manual de cada projeto aparecem nos relatórios. A skill também descartou corretamente dois falsos positivos: no projeto 2 rodou o sinal de SQL injection e concluiu que todas as queries usavam placeholders; no projeto 3 identificou que `like(f'%{query}%')` monta apenas o valor do bind parameter.
 
 **Correção pós-execução.** O finding #13 do projeto 3 afirmava que apagar uma categoria deixava tasks órfãs. Na Fase 3 a própria skill verificou que o SQLAlchemy já anulava a FK implicitamente via `backref`, e apontou a imprecisão. O texto do finding foi corrigido no relatório salvo, com nota explicando a correção; o problema real, ausência de política explícita de integridade, permanece válido.
+
+**Segunda execução no projeto 2 (após a avaliação).** O avaliador notou que o relatório listava no Impact do finding de senhas "usuários criados sem saber que têm a senha `123456`", mas o `checkout.service.js` gerado na primeira execução continuava usando `DEFAULT_PASSWORD = '123456'` quando o `pwd` não vinha, agora só hasheado. A conta continuava acessível com `123456`. Havia duas causas na skill. Primeira: o próprio playbook trazia essa constante como exemplo no PB-10 e no PB-13, e o checklist do PB-13 ("valores idênticos aos originais") incentivava manter o literal. Segunda: a Fase 3 dava o finding como resolvido porque o PB tinha sido aplicado, sem conferir as consequências descritas no Impact. Ajustes:
+
+- **PB-04:** ganhou a seção "Senha padrão fixa". Senha ausente vira uma senha aleatória inutilizável (`randomBytes(32)` / `secrets.token_urlsafe(32)`), hasheada e descartada. O `pwd` segue opcional e o contrato não muda.
+- **PB-10 e PB-13:** os exemplos perderam o `DEFAULT_PASSWORD`. O PB-13 agora diz que credenciais não são constantes de domínio.
+- **Catálogo:** o AP-04 ganhou sinais de detecção para fallback de senha literal, e o AP-15 deixou de tratar senha como magic string.
+- **Fase 3:** passa a conferir o Impact item a item, com evidência observada (grep, leitura ou execução), numa tabela `Impact Verification`. Um finding só conta como resolvido com todos os itens `✓`.
+
+A skill foi então executada de novo, do zero, sobre o código original do projeto 2 (restaurado do commit `6d1ce62`) numa sessão nova. O relatório refeito tem 16 findings. A diferença para os 17 da primeira execução é que a duplicação de código (AP-13) não foi reportada como finding próprio; os 10 problemas da análise manual continuam cobertos. A Fase 3 conferiu 47/47 itens de Impact. Para o item da senha, a evidência foi `verifyPassword('123456', hash da conta criada sem pwd) → false`. A verificação independente refez o mesmo teste pelo caminho real (checkout sem `pwd` → hash gravado no banco): `false` para `123456`, `false` para `123` no usuário do seed, e um hash distinto por conta.
 
 ### Estrutura antes/depois
 
@@ -179,7 +190,7 @@ database.py                   ├── app.py                # create_app(): co
                               └── middlewares/error_handler.py
 ```
 
-**Projeto 2 — ecommerce-api-legacy** (3 arquivos / 180 LOC → 30 módulos / 698 LOC)
+**Projeto 2 — ecommerce-api-legacy** (3 arquivos / 180 LOC → 31 módulos / 603 LOC)
 
 ```
 ANTES                         DEPOIS
@@ -191,11 +202,11 @@ src/utils.js                  src/
                               ├── domain/               # constants.js, errors.js
                               ├── models/               # user, course, enrollment, payment, auditLog, report (JOIN)
                               ├── services/             # checkout (transacional), payment, report, user
-                              ├── validators/           # checkout, user
+                              ├── validators/           # checkout, user, common (inteiro positivo)
                               ├── controllers/          # checkout, report, user
                               ├── routes/               # index.js (/api) + um por entidade
                               ├── middlewares/          # asyncHandler.js, errorHandler.js
-                              └── utils/                # logger.js, password.js (scrypt)
+                              └── utils/                # logger.js, password.js (scrypt + senha aleatória inutilizável)
 ```
 
 `package.json` e `api.http` não foram alterados.
@@ -233,7 +244,7 @@ utils/   (1, quase sem uso)   validators/ (3)           # novo
 | Relatório segue o template | ✓ | ✓ | ✓ |
 | Cada finding tem arquivo e linhas exatos | ✓ | ✓ | ✓ |
 | Findings ordenados CRITICAL → LOW | ✓ | ✓ | ✓ |
-| Mínimo de 5 findings | ✓ 17 | ✓ 17 | ✓ 17 |
+| Mínimo de 5 findings | ✓ 17 | ✓ 16 | ✓ 17 |
 | Detecção de APIs deprecated incluída | ✓ | ✓ | ✓ |
 | Skill pausa e pede confirmação antes da Fase 3 | ✓ | ✓ | ✓ |
 | **Fase 3** | | | |
@@ -264,6 +275,7 @@ OK  POST   /admin/query       -> 403                                            
 OK  POST   /api/checkout      -> 200 keys=['enrollment_id', 'msg']       # cartão 4111... (api.http)
 OK  POST   /api/checkout      -> 400 "Pagamento recusado"                # cartão 5111... (api.http)
 OK  DELETE /api/users/1       -> 200 "Usuário deletado"
+OK  DELETE /api/users/abc     -> 400 "Bad Request"
 OK  GET    /api/admin/financial-report -> 200 list[2] item:['course', 'revenue', 'students']   # sem 'Unknown'
 === ecommerce-api-legacy: 9/9 OK ===
 
@@ -277,7 +289,7 @@ OK  GET    /reports/summary   -> 200 keys=['generated_at', 'overdue', 'overview'
 
 ### Mudanças de comportamento intencionais (documentadas pela skill)
 
-Comuns aos três: campos de senha ou hash removidos das respostas; segredos saem do código para variáveis de ambiente com defaults seguros (`DEBUG=false`, host local); entradas malformadas que geravam 500 passam a responder 400; bancos locais recriados por causa da troca do esquema de senha. Específicas: no projeto 1, `/admin/query` e `/admin/reset-db` continuam registradas mas respondem 403 salvo flag de ambiente; no projeto 2, o `DELETE /api/users/:id` cascateia matrículas e pagamentos e a mensagem deixa de admitir "ficaram sujos no banco"; no projeto 3, o token de login passa a ser aleatório em vez de `fake-jwt-token-<id>`. Nomes de campos de entrada, paths, métodos e status codes de sucesso foram preservados em todos os endpoints, inclusive os campos `usr`, `eml`, `c_id` e `card` do checkout.
+Comuns aos três: campos de senha ou hash removidos das respostas; segredos saem do código para variáveis de ambiente com defaults seguros (`DEBUG=false`, host local); entradas malformadas que geravam 500 passam a responder 400; bancos locais recriados por causa da troca do esquema de senha. Específicas: no projeto 1, `/admin/query` e `/admin/reset-db` continuam registradas mas respondem 403 salvo flag de ambiente; no projeto 2, o `DELETE /api/users/:id` cascateia matrículas e pagamentos e a mensagem deixa de admitir "ficaram sujos no banco", contas criadas no checkout sem `pwd` recebem uma senha aleatória inutilizável em vez de `123456` (o campo segue opcional), o usuário do seed deixa de ter a senha `123`, e checkout recusado não grava mais o usuário; no projeto 3, o token de login passa a ser aleatório em vez de `fake-jwt-token-<id>`. Nomes de campos de entrada, paths, métodos e status codes de sucesso foram preservados em todos os endpoints, inclusive os campos `usr`, `eml`, `c_id` e `card` do checkout.
 
 ### Observações sobre o comportamento em stacks diferentes
 
@@ -287,7 +299,7 @@ Comuns aos três: campos de senha ou hash removidos das respostas; segredos saem
 - **Honestidade na validação.** Em nenhum projeto a skill escreveu "zero anti-patterns"; cada uma listou resíduos justificados (ex.: `this.lastID` dentro do wrapper de Promises, f-string que interpola apenas placeholders `?`).
 - **Adaptação a ambiente hostil.** As Fases 3 dos três projetos foram executadas em paralelo por engano. A skill do projeto 1 encontrou a porta 5000 ocupada pelo projeto 3, não matou o processo alheio (regra da referência de validação) e validou em portas alternativas, mantendo 5000 como default do contrato. A validação independente posterior confirmou os resultados na porta padrão.
 - **Diferença entre Flask puro e SQLAlchemy.** No projeto 1 a camada de dados virou funções com SQL parametrizado e um `to_dict` por entidade; no projeto 3 os `db.Model` existentes foram mantidos e a correção foi em `to_dict`, cascatas e substituição de `Model.query.get` por `db.session.get`. O playbook cobre os dois casos.
-- **Iterações.** Nenhuma iteração da skill foi necessária: os três projetos passaram na primeira execução completa. O enunciado previa de 2 a 4.
+- **Iterações.** Os três projetos passaram nos critérios de aceite na primeira execução completa. A avaliação apontou uma falha que esses critérios não pegavam: o finding de senha do projeto 2 foi dado como resolvido com o impacto ainda presente. Isso levou a uma segunda iteração da skill (PB-04, PB-10, PB-13, AP-04/AP-15 e conferência do Impact na Fase 3) e a uma nova execução completa no projeto 2. Os projetos 1 e 3 não têm fallback de senha literal (o sinal novo do AP-04 não encontra ocorrência), por isso não foram reexecutados.
 
 ---
 

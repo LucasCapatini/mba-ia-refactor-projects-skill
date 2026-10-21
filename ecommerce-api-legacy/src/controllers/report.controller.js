@@ -1,10 +1,12 @@
-'use strict';
-
+// HTTP ↔ relatório financeiro.
 const reportService = require('../services/report.service');
 
-module.exports = ({ db }) => ({
+function createReportController({ db }) {
+  return {
     async financialReport(req, res) {
-        const report = await reportService.financialReport(db);
-        res.status(200).json(report);
+      res.json(await reportService.financialReport(db));
     },
-});
+  };
+}
+
+module.exports = { createReportController };

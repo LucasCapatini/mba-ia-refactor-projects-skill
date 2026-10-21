@@ -1,18 +1,12 @@
-'use strict';
-
+// Gateway de pagamento simulado: aprova cartões que começam com o prefixo configurado.
 const config = require('../config');
-const logger = require('../utils/logger');
 const { PAYMENT_STATUS } = require('../domain/constants');
+const logger = require('../utils/logger');
 
-/**
- * Gateway simulado: aprova cartões cujo número começa com o prefixo configurado.
- * Nunca registra o número do cartão nem a chave do gateway.
- */
-function authorize(cardNumber) {
-    logger.debug('Autorizando pagamento', { gatewayConfigured: Boolean(config.paymentGatewayKey) });
-    return String(cardNumber).startsWith(config.approvedCardPrefix)
-        ? PAYMENT_STATUS.PAID
-        : PAYMENT_STATUS.DENIED;
+function authorize(cardNumber, approvedPrefix = config.approvedCardPrefix) {
+  const status = cardNumber.startsWith(approvedPrefix) ? PAYMENT_STATUS.PAID : PAYMENT_STATUS.DENIED;
+  logger.debug(`Pagamento simulado: cartão final ${cardNumber.slice(-4)} -> ${status}`);
+  return status;
 }
 
 module.exports = { authorize };

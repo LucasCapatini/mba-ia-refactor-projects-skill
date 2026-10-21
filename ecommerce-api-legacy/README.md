@@ -1,6 +1,6 @@
 # ecommerce-api-legacy
 
-LMS API (com fluxo de checkout) em Node.js/Express usada como entrada do desafio `refactor-arch`.
+LMS API (com fluxo de checkout) em Node.js/Express, refatorada para MVC pela skill `refactor-arch`.
 
 ## Como rodar
 
@@ -9,39 +9,44 @@ npm install
 npm start
 ```
 
-A aplicação sobe em `http://localhost:3000`. Por padrão o banco SQLite é em memória e os seeds são carregados automaticamente no boot.
+A aplicação sobe em `http://127.0.0.1:3000`. O banco SQLite é em memória por padrão: schema e seeds são criados no boot, antes de a porta abrir.
 
 Exemplos de requisições estão em `api.http`.
 
-### Variáveis de ambiente
+## Configuração
 
-Todas são opcionais e estão documentadas em `.env.example`:
+Todas as variáveis são opcionais (veja `.env.example`). Para usar um arquivo `.env` sem dependência extra:
 
-| Variável | Default | Descrição |
+```bash
+node --env-file=.env src/app.js
+```
+
+| Variável | Padrão | Descrição |
 |---|---|---|
 | `PORT` | `3000` | Porta HTTP |
-| `DB_PATH` | `:memory:` | Caminho do arquivo SQLite (`:memory:` recria schema e seeds a cada boot) |
-| `PAYMENT_GATEWAY_KEY` | vazio | Credencial do gateway de pagamento (simulado) |
-| `APPROVED_CARD_PREFIX` | `4` | Prefixo de cartão aprovado pelo gateway simulado |
+| `HOST` | `127.0.0.1` | Interface de escuta (use `0.0.0.0` para expor na rede) |
+| `DB_PATH` | `:memory:` | Caminho do banco SQLite |
+| `APPROVED_CARD_PREFIX` | `4` | Gateway simulado: cartões com este prefixo são aprovados |
 | `LOG_LEVEL` | `info` | `error`, `warn`, `info` ou `debug` |
-
-Para usar um arquivo `.env` (nunca versionado): `cp .env.example .env` e `node --env-file=.env src/app.js`.
-
-Seed manual (útil com `DB_PATH` apontando para arquivo): `node src/database/seed.js`.
 
 ## Estrutura
 
 ```
 src/
-├── app.js            # createApp({ db }) + start(); guard require.main
-├── config/           # variáveis de ambiente com defaults seguros
-├── database/         # conexão única (Promises + transação), schema, seed
+├── app.js            # createApp({ db }) + start() (guard require.main)
+├── config/           # variáveis de ambiente
+├── database/         # conexão única em Promises, transação, schema, seed
 ├── domain/           # constantes e erros de domínio
 ├── models/           # SQL parametrizado por entidade
-├── services/         # regras de negócio (checkout, pagamento, relatório, usuário)
-├── validators/       # validação de entrada (mantém os nomes de campos do contrato)
-├── controllers/      # HTTP ↔ domínio
+├── services/         # checkout, pagamento simulado, relatório, usuário
+├── validators/       # validação do body e dos parâmetros
+├── controllers/      # HTTP ↔ services
 ├── routes/           # mapeamento método + path → controller
 ├── middlewares/      # asyncHandler e error handler central
 └── utils/            # logger e hash de senha (scrypt)
 ```
+
+## Observações
+
+- O usuário semente e as contas criadas no checkout sem `pwd` recebem uma senha aleatória inutilizável (não há login por senha para elas).
+- Remover um usuário remove também as matrículas e os pagamentos dele (`ON DELETE CASCADE`).

@@ -2,7 +2,4 @@
 > desafio-arquitetura-ia-boilerplate@1.0.0 start
 > node src/app.js
 
-[info] LMS API rodando na porta 3000
-[info] Checkout concluído { userId: 2, courseId: 2, enrollmentId: 2 }
-[info] Checkout concluído { userId: 4, courseId: 1, enrollmentId: 3 }
-[info] Usuário removido { userId: 1, removed: 1 }
+[2026-10-21T13:44:46.509Z] [info] LMS API rodando em http://127.0.0.1:3000

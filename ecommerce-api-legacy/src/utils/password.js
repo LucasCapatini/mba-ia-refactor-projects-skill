@@ -1,24 +1,27 @@
-'use strict';
+// Hash de senha com scrypt + salt aleatório (somente node:crypto).
+const { scrypt, randomBytes, timingSafeEqual } = require('node:crypto');
+const { promisify } = require('node:util');
 
-const { scryptSync, randomBytes, timingSafeEqual } = require('node:crypto');
-
-const SALT_BYTES = 16;
+const scryptAsync = promisify(scrypt);
 const KEY_LENGTH = 64;
 
-/** Gera `salt:hash` com scrypt (biblioteca padrão, sem dependência nova). */
-function hashPassword(password) {
-    const salt = randomBytes(SALT_BYTES).toString('hex');
-    const hash = scryptSync(String(password), salt, KEY_LENGTH).toString('hex');
-    return `${salt}:${hash}`;
+async function hashPassword(password) {
+  const salt = randomBytes(16).toString('hex');
+  const hash = await scryptAsync(password, salt, KEY_LENGTH);
+  return `${salt}:${hash.toString('hex')}`;
 }
 
-/** Compara em tempo constante uma senha com o valor armazenado por `hashPassword`. */
-function verifyPassword(password, stored) {
-    if (typeof stored !== 'string' || !stored.includes(':')) return false;
-    const [salt, hash] = stored.split(':');
-    const candidate = scryptSync(String(password), salt, KEY_LENGTH);
-    const expected = Buffer.from(hash, 'hex');
-    return candidate.length === expected.length && timingSafeEqual(candidate, expected);
+async function verifyPassword(password, stored) {
+  const [salt, hash] = String(stored).split(':');
+  if (!salt || !hash) return false;
+  const expected = Buffer.from(hash, 'hex');
+  const candidate = await scryptAsync(password, salt, expected.length);
+  return timingSafeEqual(candidate, expected);
 }
 
-module.exports = { hashPassword, verifyPassword };
+// Senha que ninguém conhece: a conta existe, mas não aceita login por senha.
+function generateUnusablePassword() {
+  return randomBytes(32).toString('base64url');
+}
+
+module.exports = { hashPassword, verifyPassword, generateUnusablePassword };
