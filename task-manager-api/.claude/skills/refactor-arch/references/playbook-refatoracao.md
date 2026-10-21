@@ -209,7 +209,39 @@ module.exports = { hashPassword, verifyPassword };
 
 **Tokens.** Se o original devolvia um token fake previsível, substitua por `secrets.token_urlsafe(32)` / `crypto.randomBytes(32).toString('hex')` mantendo a chave `token` na resposta. Não implemente JWT completo sem pedido explícito.
 
-**Checklist.** Seeds hasheiam; banco local antigo recriado e avisado; `grep -n "senha\|password"` nos serializadores sem resultado; login continua respondendo o mesmo status para sucesso/falha.
+**Senha padrão fixa.** Quando o campo de senha é opcional e o código cai num literal (`password || "123456"`, `senha or "mudar123"`, `DEFAULT_PASSWORD`), o problema **não** é o algoritmo de hash: é que toda conta criada sem senha tem a mesma senha, conhecida por quem lê o código. Hashear o literal não resolve nada (o login com `123456` continua funcionando). Substitua o literal por uma **senha aleatória inutilizável**: gerada com o CSPRNG da linguagem a cada criação, hasheada como qualquer outra e **descartada** (nunca logada, devolvida ou persistida em claro). Ninguém conhece essa senha, então a conta não aceita login por senha até um fluxo de definição/redefinição existir. O campo continua opcional e a resposta não muda: o contrato fica intacto.
+
+**Antes (JS)**
+```js
+const DEFAULT_PASSWORD = '123456';
+const passwordHash = hashPassword(password || DEFAULT_PASSWORD);   // hash de um segredo público
+```
+
+**Depois (JS)** — em `src/utils/password.js`, ao lado de `hashPassword`
+```js
+// Senha que ninguém conhece: a conta existe, mas não aceita login por senha.
+function generateUnusablePassword() {
+  return randomBytes(32).toString('base64url');
+}
+module.exports = { hashPassword, verifyPassword, generateUnusablePassword };
+```
+```js
+const passwordHash = hashPassword(password || generateUnusablePassword());
+```
+
+**Depois (Python)**
+```python
+import secrets
+
+def gerar_senha_inutilizavel():
+    return secrets.token_urlsafe(32)
+
+senha_hash = generate_password_hash(senha or gerar_senha_inutilizavel())
+```
+
+Não crie constante para a senha padrão (nem em `config`/`.env`: uma senha padrão configurável continua sendo uma senha compartilhada por todas as contas). Se o projeto já tem uma constante assim, remova-a junto com todos os imports. Documente em `Intentional Behavior Changes`: "contas criadas sem senha não aceitam mais login com `<literal>`".
+
+**Checklist.** Seeds hasheiam; banco local antigo recriado e avisado; `grep -n "senha\|password"` nos serializadores sem resultado; login continua respondendo o mesmo status para sucesso/falha; o literal da senha padrão original (`grep -rn "<literal>"` no código-fonte, fora de seeds documentados) não aparece mais; uma conta criada sem o campo de senha **não** autentica com o literal antigo (prova: verificar o hash gravado contra o literal deve dar falso).
 
 ---
 
@@ -587,7 +619,7 @@ async function checkout(db, { name, email, password, courseId, card }) {
 
   await db.exec('BEGIN');
   try {
-    const user = (await users.findByEmail(db, email)) || await users.create(db, { name, email, passwordHash: hashPassword(password || DEFAULT_PASSWORD) });
+    const user = (await users.findByEmail(db, email)) || await users.create(db, { name, email, passwordHash: hashPassword(password || generateUnusablePassword()) });   // PB-04: nunca senha padrão fixa
     const { lastID: enrollmentId } = await enrollments.create(db, user.id, courseId);
     await payments.create(db, enrollmentId, course.price, status);
     await audit.log(db, `Checkout curso ${courseId} por ${user.id}`);
@@ -761,12 +793,13 @@ let status = cc.startsWith("4") ? "PAID" : "DENIED";
 ```js
 module.exports = {
   PAYMENT_STATUS: Object.freeze({ PAID: 'PAID', DENIED: 'DENIED' }),
-  DEFAULT_PASSWORD: '123456',
 };
 // prefixo aprovado vem de config.approvedCardPrefix (PB-01)
 ```
 
-**Checklist.** Nenhuma lista literal de domínio em controllers/services; valores idênticos aos originais (não "corrija" a regra de negócio).
+**Credenciais não são constantes de domínio.** Senhas padrão, tokens, chaves e segredos literais **nunca** viram constante nomeada (nem aqui, nem em `config`): extrair `"123456"` para `DEFAULT_PASSWORD` só dá nome ao problema. Se o literal for uma senha padrão, aplique a seção "Senha padrão fixa" do PB-04; se for segredo, PB-01. Se o mesmo literal aparecer em mais de um finding (ex.: AP-04 e AP-15), a correção é a do finding de maior severidade.
+
+**Checklist.** Nenhuma lista literal de domínio em controllers/services; valores de **regra de negócio** idênticos aos originais (não "corrija" a regra); nenhuma credencial (senha, token, chave) entre as constantes.
 
 ---
 

@@ -1,32 +1,28 @@
-'use strict';
-
-const { PAYMENT_STATUS } = require('../domain/constants');
+// Relatório financeiro: agrega as linhas da consulta única por curso.
 const reportModel = require('../models/report.model');
+const { PAYMENT_STATUS } = require('../domain/constants');
 
-function groupByCourse(rows) {
-    const byCourse = new Map();
+const toStudentEntry = (row) => ({
+  student: row.student_name ?? 'Unknown',
+  paid: row.payment_amount ?? 0,
+});
 
-    for (const row of rows) {
-        if (!byCourse.has(row.course_id)) {
-            byCourse.set(row.course_id, { course: row.title, revenue: 0, students: [] });
-        }
-        const entry = byCourse.get(row.course_id);
-
-        if (row.enrollment_id === null) continue; // curso sem matrículas
-
-        if (row.status === PAYMENT_STATUS.PAID) {
-            entry.revenue += row.amount;
-        }
-        entry.students.push(reportModel.toStudentEntry(row));
-    }
-
-    return [...byCourse.values()];
-}
-
-/** Relatório financeiro: [{ course, revenue, students: [{ student, paid }] }]. */
 async function financialReport(db) {
-    const rows = await reportModel.fetchFinancialRows(db);
-    return groupByCourse(rows);
+  const rows = await reportModel.findFinancialRows(db);
+  const byCourse = new Map();
+
+  for (const row of rows) {
+    if (!byCourse.has(row.course_id)) {
+      byCourse.set(row.course_id, { course: row.course_title, revenue: 0, students: [] });
+    }
+    if (row.enrollment_id === null) continue;
+
+    const entry = byCourse.get(row.course_id);
+    if (row.payment_status === PAYMENT_STATUS.PAID) entry.revenue += row.payment_amount;
+    entry.students.push(toStudentEntry(row));
+  }
+
+  return [...byCourse.values()];
 }
 
-module.exports = { financialReport, groupByCourse };
+module.exports = { financialReport };

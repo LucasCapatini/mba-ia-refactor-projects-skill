@@ -1,12 +1,6 @@
-'use strict';
+// Constantes do domínio. O prefixo de aprovação de cartão vem da config (APPROVED_CARD_PREFIX).
+const PAYMENT_STATUS = Object.freeze({ PAID: 'PAID', DENIED: 'DENIED' });
 
-module.exports = Object.freeze({
-    PAYMENT_STATUS: Object.freeze({ PAID: 'PAID', DENIED: 'DENIED' }),
-    /**
-     * Senha atribuída quando o checkout não envia `pwd`.
-     * Mantida por compatibilidade com o comportamento original (campo opcional no contrato);
-     * agora é armazenada apenas como hash com salt.
-     */
-    DEFAULT_PASSWORD: '123456',
-    UNKNOWN_STUDENT: 'Unknown',
-});
+const COURSE_ACTIVE = 1;
+
+module.exports = { PAYMENT_STATUS, COURSE_ACTIVE };

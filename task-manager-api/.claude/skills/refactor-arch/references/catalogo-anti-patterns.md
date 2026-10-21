@@ -45,13 +45,13 @@ Distribuição deste catálogo: 4 CRITICAL, 4 HIGH, 6 MEDIUM, 4 LOW.
 
 ## AP-04 — Armazenamento inseguro de senhas, criptografia caseira e vazamento de credenciais · CRITICAL
 
-**Descrição.** Senha em texto puro, hash fraco (MD5/SHA1 sem salt), "cripto" própria, comparação não constante, ou senha/hash devolvido em serializações.
+**Descrição.** Senha em texto puro, hash fraco (MD5/SHA1 sem salt), "cripto" própria, comparação não constante, senha/hash devolvido em serializações, ou **senha padrão fixa** atribuída quando o cliente não envia uma.
 
-**Sinais Python.** `hashlib\.(md5|sha1)\(` em contexto de senha; `WHERE .*senha\s*=`; `'password'|"senha"` como chave em `to_dict`/dict de resposta; `== password` em comparação de hash; token montado por concatenação (`'token-' + str(id)`).
-**Sinais Node.** `Buffer.from(pwd).toString('base64')`; `createHash\(['"](md5|sha1)`; funções `*Crypto`/`*Hash` próprias com loops; `pass` salvo direto do body.
-**Falsos positivos.** `werkzeug.security`, `bcrypt`, `argon2`, `scrypt`, `pbkdf2` com salt; hash usado para checksum de arquivo, não senha.
-**Impacto.** Comprometimento de contas; escalada se a senha for reutilizada.
-**Recomendação.** Hash com salt via biblioteca padrão; remover campos sensíveis de toda serialização; comparação em tempo constante. → **PB-04**, **PB-14**.
+**Sinais Python.** `hashlib\.(md5|sha1)\(` em contexto de senha; `WHERE .*senha\s*=`; `'password'|"senha"` como chave em `to_dict`/dict de resposta; `== password` em comparação de hash; token montado por concatenação (`'token-' + str(id)`); senha padrão: `(senha|password|pwd)\w*\s+or\s+['"][^'"]`, `(hash|crypt)\w*\(\s*\w+\s+or\s+['"][^'"]` (com `-i`, pega qualquer nome de variável), `\.get\(['"](senha|password|pwd)['"],\s*['"][^'"]`, constante `(DEFAULT|PADRAO)_?(PASSWORD|SENHA)`.
+**Sinais Node.** `Buffer.from(pwd).toString('base64')`; `createHash\(['"](md5|sha1)`; funções `*Crypto`/`*Hash` próprias com loops; `pass` salvo direto do body; senha padrão: `(pwd|pass|password)\w*\s*(\|\||\?\?)\s*['"][^'"]`, literal como fallback dentro da chamada de hash (qualquer nome de variável) `(hash|crypt)\w*\(\s*\w+\s*(\|\||\?\?)\s*['"][^'"]` (com `-i`), constante `DEFAULT_?PASSWORD`.
+**Falsos positivos.** `werkzeug.security`, `bcrypt`, `argon2`, `scrypt`, `pbkdf2` com salt; hash usado para checksum de arquivo, não senha; senha literal **só em script de seed** de desenvolvimento, documentada no README e gravada com hash (continua citável em AP-01, não aqui); default vazio (`.get("senha", "")`) seguido de rejeição do campo como obrigatório. Hash correto aplicado sobre uma senha padrão literal **não** é falso positivo: a conta continua acessível com o literal.
+**Impacto.** Comprometimento de contas; escalada se a senha for reutilizada; contas criadas sem senha acessíveis por qualquer um que conheça o literal.
+**Recomendação.** Hash com salt via biblioteca padrão; remover campos sensíveis de toda serialização; comparação em tempo constante; senha ausente vira senha aleatória inutilizável, nunca um literal. → **PB-04**, **PB-14**.
 
 ## AP-05 — Lógica de negócio em rotas/controllers (Fat Controller) · HIGH
 
@@ -193,7 +193,7 @@ Express 4 continua em manutenção: registrar as remoções do 5 como recomenda�
 
 **Sinais Python.** `in \['pending', 'in_progress'` inline; `len\(\w+\)\s*[<>]=?\s*\d{2,}`; `0\.\d+` em cálculo de preço; `>= 1 and .* <= 5` repetido.
 **Sinais Node.** `startsWith\("4"\)`; `'PAID'|'DENIED'` literais em vários pontos; `for \(.*< 10000`.
-**Falsos positivos.** `0`, `1`, índices, códigos HTTP padrão.
+**Falsos positivos.** `0`, `1`, índices, códigos HTTP padrão. Senhas, tokens e chaves literais **não** são magic strings a extrair: são AP-04/AP-01 e não viram constante.
 **Recomendação.** Módulo de constantes/enums do domínio. → **PB-13**.
 
 ## AP-16 — Nomenclatura ruim e abreviações · LOW

@@ -1,17 +1,15 @@
-'use strict';
+// Monta todas as rotas sob o prefixo /api.
+const express = require('express');
+const { buildCheckoutRoutes } = require('./checkout.routes');
+const { buildReportRoutes } = require('./report.routes');
+const { buildUserRoutes } = require('./user.routes');
 
-const { Router } = require('express');
-const checkoutRoutes = require('./checkout.routes');
-const reportRoutes = require('./report.routes');
-const userRoutes = require('./user.routes');
+function buildRoutes({ db }) {
+  const router = express.Router();
+  router.use(buildCheckoutRoutes({ db }));
+  router.use(buildReportRoutes({ db }));
+  router.use(buildUserRoutes({ db }));
+  return router;
+}
 
-/** Monta todas as rotas da API (o prefixo `/api` é aplicado pelo composition root). */
-module.exports = function buildRoutes({ db }) {
-    const router = Router();
-
-    router.use(checkoutRoutes({ db }));
-    router.use(reportRoutes({ db }));
-    router.use(userRoutes({ db }));
-
-    return router;
-};
+module.exports = { buildRoutes };

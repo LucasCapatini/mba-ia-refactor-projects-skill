@@ -125,7 +125,33 @@ Se não for prático listar as rotas programaticamente no Express, o smoke compl
 
 Compare com a tabela da Fase 1: nenhuma rota pode sumir ou mudar de método.
 
-## 9. Checklist final (copiar para a saída da Fase 3)
+## 9. Conferência do Impact por finding
+
+O re-scan da seção 7 prova que os **sinais** sumiram; esta seção prova que as **consequências** sumiram. Um finding pode ter o PB aplicado e ainda assim manter o impacto (ex.: a senha padrão passou a ser hasheada, mas toda conta criada sem senha continua entrando com `123456`).
+
+Para cada finding do relatório confirmado:
+
+1. Releia `Impact` e `Locations` no relatório salvo.
+2. Quebre o `Impact` em itens (separador `;`). Cada item vira uma pergunta fechada: "isto ainda pode acontecer no código novo?".
+3. Responda com uma evidência **executada ou lida agora**, nunca de memória:
+   - **Grep** pelo literal ou idioma citado (senha padrão, segredo, `startsWith("4")`, `console.log` de cartão) no código-fonte novo, excluindo `.claude/`, `node_modules/` e arquivos de exemplo; resultado vazio ou ocorrência justificada.
+   - **Read** do trecho novo que substitui cada entrada de `Locations`.
+   - **Execução** quando o impacto é comportamental: requisição do smoke, ou script de uma linha que importa o módulo e testa a regra. Exemplos:
+     ```bash
+     # senha padrão fixa: conta criada sem pwd não pode autenticar com o literal antigo
+     node -e "const p=require('./src/utils/password'); const h=p.hashPassword(p.generateUnusablePassword()); console.log(p.verifyPassword('123456', h))"   # esperado: false
+     python -c "from werkzeug.security import check_password_hash as c; from <modulo> import <funcao_que_gera_o_hash> as f; print(c(f(None), '123456'))"   # esperado: False
+     ```
+     Prefira exercitar o caminho real (criar a conta pelo endpoint e ler o hash gravado) quando o banco for acessível.
+4. Registre na tabela `Impact Verification` da saída final, uma linha por item:
+
+| Finding | Impact item | Evidence | OK? |
+|---|---|---|---|
+| #3 AP-04 | usuários criados sem saber que têm a senha `123456` | `grep -rn "123456" src/` vazio; `verifyPassword('123456', hash da conta criada sem pwd)` → `false` | ✓ |
+
+5. Só marque o finding como resolvido com **todos** os itens `✓`. Item `✗`: corrija, refaça a validação afetada (boot/smoke) e reconfira. Se não for possível corrigir dentro do escopo, mova o finding para `Findings Remaining` citando o item.
+
+## 10. Checklist final (copiar para a saída da Fase 3)
 
 ```
   ✓/✗ Static check (compile/import sem efeitos colaterais)
@@ -135,5 +161,6 @@ Compare com a tabela da Fase 1: nenhuma rota pode sumir ou mudar de método.
   ✓/✗ Dangerous routes disabled by default (403)
   ✓/✗ Sensitive fields absent from responses
   ✓/✗ Catalog signals re-scan (<resíduos justificados>)
+  ✓/✗ Impact verified item by item (<itens ✓>/<itens>)
   ✓/✗ Server process terminated, port free
 ```

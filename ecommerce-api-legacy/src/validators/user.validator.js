@@ -1,12 +1,11 @@
-'use strict';
-
+// Valida parâmetros de rota de usuário.
 const { ValidationError } = require('../domain/errors');
+const { toPositiveInt } = require('./common.validator');
 
-/** Parâmetro de rota `:id` deve ser um inteiro positivo. */
-function validateUserId(rawId) {
-    const id = Number(rawId);
-    if (!Number.isInteger(id) || id <= 0) throw new ValidationError('Bad Request');
-    return id;
+function validateUserId(params) {
+  const userId = toPositiveInt(params && params.id);
+  if (userId === null) throw new ValidationError();
+  return userId;
 }
 
 module.exports = { validateUserId };

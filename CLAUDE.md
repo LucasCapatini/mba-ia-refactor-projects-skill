@@ -60,6 +60,8 @@ Os três seguem a mesma direção de dependências: `entry point → composition
 - `src/app.js`: `createApp({ db })` sem efeitos colaterais + `start()` com guard `require.main`. `require('./src/app')` não abre porta.
 - `src/database/connection.js`: **uma única** conexão `sqlite3` (obrigatório com `:memory:`), wrapper `run/get/all/exec` em Promises, `transaction()` serializado por fila. Schema e seed são aguardados antes do `listen`.
 - Campos do body do checkout (`usr`, `eml`, `pwd`, `c_id`, `card`) fazem parte do contrato e são mapeados para nomes internos no validator. Cartão começando com `APPROVED_CARD_PREFIX` (default `4`) é aprovado; o gateway é simulado.
+- `pwd` é opcional: sem ele, a conta recebe `generateUnusablePassword()` (`src/utils/password.js`), nunca uma senha padrão literal. O usuário do seed também não tem senha conhecida. Não existe endpoint de login.
+- Este projeto foi refatorado duas vezes. A 2ª execução (após a avaliação) partiu do código original e substituiu a 1ª; o relatório atual tem 16 findings.
 - Handlers async passam por `asyncHandler`; erros em texto puro para manter o formato original.
 
 ### task-manager-api (Estratégia B: pastas originais mantidas)
@@ -73,3 +75,4 @@ Os três seguem a mesma direção de dependências: `entry point → composition
 - Idioma de código, comentários, relatórios e documentação: português (identificadores técnicos em inglês onde a convenção da stack pede, como em Node).
 - Nenhuma dependência nova sem necessidade comprovada: hash de senha usa `werkzeug.security` (Flask) e `node:crypto` (scrypt); `.env` via `python-dotenv` (já pinado) ou `node --env-file`.
 - Ao alterar a skill, mantenha a regra de que nenhuma heurística depende de nomes de arquivo deste repositório.
+- Na Fase 3 da skill, finding resolvido = cada item do `Impact` conferido com evidência (tabela `Impact Verification`), não "PB aplicado". Credenciais (senha padrão, token, chave) nunca viram constante.

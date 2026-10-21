@@ -9,7 +9,7 @@ O relatório impresso no chat e o arquivo salvo devem ser **idênticos** e segui
 3. **Localização:** sempre `arquivo:linha` ou `arquivo:início-fim`, caminho relativo à raiz do projeto. Múltiplas ocorrências do mesmo anti-pattern ficam num só finding, listadas em `Locations`.
 4. **ID do catálogo:** cada finding referencia o `AP-xx` e o(s) `PB-xx` que o resolve(m).
 5. **Descrição:** o que está errado, em 1 a 3 frases, citando o trecho relevante.
-6. **Impact:** consequência concreta (segurança, manutenção, performance).
+6. **Impact:** consequências concretas (segurança, manutenção, performance), separadas por `;`. Cada item deve ser verificável, porque a Fase 3 confere item a item antes de dar o finding como resolvido (ex.: "usuários criados sem saber que têm a senha `123456`" é verificável; "código ruim" não é).
 7. **Recommendation:** ação objetiva, nomeando a camada de destino quando for mudança estrutural.
 8. **Summary:** as contagens devem bater com a lista.
 9. **APIs deprecated:** sempre presente, mesmo que vazia.

@@ -1,14 +1,13 @@
-'use strict';
-
-const { Router } = require('express');
+const express = require('express');
 const asyncHandler = require('../middlewares/asyncHandler');
-const createUserController = require('../controllers/user.controller');
+const { createUserController } = require('../controllers/user.controller');
 
-module.exports = ({ db }) => {
-    const router = Router();
-    const controller = createUserController({ db });
+function buildUserRoutes({ db }) {
+  const router = express.Router();
+  const controller = createUserController({ db });
 
-    router.delete('/users/:id', asyncHandler(controller.remove));
+  router.delete('/users/:id', asyncHandler(controller.remove));
+  return router;
+}
 
-    return router;
-};
+module.exports = { buildUserRoutes };

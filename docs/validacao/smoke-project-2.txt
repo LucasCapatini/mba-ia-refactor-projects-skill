@@ -2,20 +2,17 @@
 === ecommerce-api-legacy boot=OK (['cmd', '/c', 'npm', 'start']) ===
 OK  POST   /api/checkout                            -> 200 (exp [200]) keys=['enrollment_id', 'msg']
 OK  POST   /api/checkout                            -> 400 (exp [400]) keys=Pagamento recusado
-OK  POST   /api/checkout                            -> 404 (exp [404]) keys=Curso não encontrado
+OK  POST   /api/checkout                            -> 404 (exp [404]) keys=Curso nÃ£o encontrado
 OK  POST   /api/checkout                            -> 400 (exp [400]) keys=Bad Request
 OK  POST   /api/checkout                            -> 200 (exp [200]) keys=['enrollment_id', 'msg']
 OK  GET    /api/admin/financial-report              -> 200 (exp [200]) keys=list[2] item:['course', 'revenue', 'students']
-OK  DELETE /api/users/1                             -> 200 (exp [200]) keys=Usuário deletado
+OK  DELETE /api/users/1                             -> 200 (exp [200]) keys=UsuÃ¡rio deletado
 OK  DELETE /api/users/abc                           -> 400 (exp [400]) keys=Bad Request
 OK  GET    /api/admin/financial-report              -> 200 (exp [200]) keys=list[2] item:['course', 'revenue', 'students']
 --- server log (tail) ---
 > desafio-arquitetura-ia-boilerplate@1.0.0 start
 > node src/app.js
-[info] LMS API rodando na porta 3000
-[info] Checkout concluído { userId: 2, courseId: 2, enrollmentId: 2 }
-[info] Checkout concluído { userId: 4, courseId: 1, enrollmentId: 3 }
-[info] Usuário removido { userId: 1, removed: 1 }
+[2026-10-21T13:44:46.509Z] [info] LMS API rodando em http://127.0.0.1:3000
 port 3000 free
 === ecommerce-api-legacy: 9/9 OK ===
 

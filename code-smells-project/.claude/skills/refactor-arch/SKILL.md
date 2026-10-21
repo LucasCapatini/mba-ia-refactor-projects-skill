@@ -93,7 +93,7 @@ Não peça confirmação ao fim da Fase 1; siga direto para a Fase 2.
 ### 3.1 Estratégia
 - `Monolito plano` → **Estratégia A: criar camadas** (novo pacote `src/` ou equivalente com config, models, controllers, routes/views, middlewares, services, validators).
 - `Parcialmente em camadas` → **Estratégia B: realocar responsabilidades** (manter as pastas existentes, adicionar as que faltam, mover lógica para o lugar certo, consolidar duplicações no que já existe).
-- Imprima um plano curto antes de tocar em qualquer arquivo: `finding → PB-xx → arquivo(s) de destino`.
+- Imprima um plano curto antes de tocar em qualquer arquivo: `finding → PB-xx → arquivo(s) de destino`. Para cada finding, diga como cada item do `Impact` deixará de acontecer. Um item do `Impact` que o PB aplicado não elimina (ex.: hashear uma senha padrão fixa não impede o login com ela) exige outra transformação no plano.
 
 ### 3.2 Execução
 Ordem: `config` → infraestrutura de banco → `models` → `services` (quando houver regra pesada) → `controllers` → `routes/views` → `middlewares`/error handler → composition root e entry point → scripts auxiliares (seed, scripts do manifesto, README do projeto, `.env.example`).
@@ -111,6 +111,7 @@ Siga `validacao.md` para a stack detectada:
 4. Smoke de **todos** os endpoints do contrato comparando com o baseline (mesmo status; mesmas chaves de topo, exceto campos sensíveis removidos de propósito). POST/PUT com payload derivado dos validadores ou dos exemplos `*.http`. Nunca aceite 5xx.
 5. Encerrar o processo do servidor (mesmo em caso de falha).
 6. Re-rodar os sinais de detecção do catálogo e listar o que restou, com justificativa.
+7. **Conferência do Impact, finding por finding** (`validacao.md`, seção 9). Quebre o `Impact` de cada finding em itens (separados por `;`) e, para cada item, junte uma evidência observada no código novo ou na execução (grep sem resultado, trecho lido, requisição, script de uma linha) de que aquela consequência não acontece mais. Confira também cada entrada de `Locations`. Um finding só entra em `Findings Resolved` se **todos** os itens estiverem `✓`. Item `✗` → corrija e reconfira; se não der para corrigir, o finding vai para `Findings Remaining` com o item que falta. "O PB foi aplicado" não é evidência.
 
 ### 3.4 Saída final
 
@@ -132,8 +133,13 @@ PHASE 3: REFACTORING COMPLETE
 ## Findings Resolved
 <lista finding → PB aplicado → arquivos>
 
+## Impact Verification
+| Finding | Impact item | Evidence | OK? |
+|---|---|---|---|
+<uma linha por item do Impact de cada finding>
+
 ## Findings Remaining
-<lista com justificativa, ou "nenhum">
+<lista com justificativa e o item de Impact que ainda acontece, ou "nenhum">
 
 ## Intentional Behavior Changes
 <campos sensíveis removidos, rotas desabilitadas por flag, etc.>
@@ -144,6 +150,7 @@ PHASE 3: REFACTORING COMPLETE
   ✓/✗ Application boots without errors
   ✓/✗ All endpoints respond as baseline (<N>/<N>)
   ✓/✗ Catalog signals re-scan (<resíduos>)
+  ✓/✗ Impact verified item by item (<itens ✓>/<itens>)
 
 ## How to run
 <comandos atualizados + variáveis de ambiente do .env.example>
